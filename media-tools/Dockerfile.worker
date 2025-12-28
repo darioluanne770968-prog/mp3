@@ -1,0 +1,30 @@
+# Worker Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install FFmpeg and LibreOffice
+RUN apk add --no-cache \
+    ffmpeg \
+    libreoffice \
+    font-noto \
+    font-noto-cjk
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
+
+# Copy source files
+COPY src ./src
+COPY tsconfig.json ./
+COPY prisma ./prisma
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create uploads directory
+RUN mkdir -p ./uploads
+
+ENV NODE_ENV=production
+
+CMD ["npx", "ts-node", "src/workers/media-worker.ts"]

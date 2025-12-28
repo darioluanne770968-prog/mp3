@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks       Task[]
+  usageRecords UsageRecord[]
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  type        String
+  status      TaskStatus @default(PENDING)
+  progress    Int        @default(0)
+  inputFile   String
+  outputFile  String?
+  params      Json?
+  error       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  completedAt DateTime?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([userId])
+}
+
+model UsageRecord {
+  id        String   @id @default(cuid())
+  toolType  String
+  action    String
+  fileSize  Int?
+  duration  Int?
+  createdAt DateTime @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@index([toolType])
+  @@index([userId])
+}
+
+model File {
+  id           String   @id @default(cuid())
+  originalName String
+  storagePath  String
+  mimeType     String
+  size         Int
+  duration     Float?
+  width        Int?
+  height       Int?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([expiresAt])
+}
+
+enum TaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
