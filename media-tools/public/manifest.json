@@ -1,0 +1,105 @@
+{
+  "name": "Media Tools",
+  "short_name": "MediaTools",
+  "description": "Free online audio, video and PDF tools",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Home page"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Audio Tools",
+      "short_name": "Audio",
+      "description": "Audio editing tools",
+      "url": "/audio",
+      "icons": [{ "src": "/icons/audio.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Video Tools",
+      "short_name": "Video",
+      "description": "Video editing tools",
+      "url": "/video",
+      "icons": [{ "src": "/icons/video.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "PDF Tools",
+      "short_name": "PDF",
+      "description": "PDF editing tools",
+      "url": "/pdf",
+      "icons": [{ "src": "/icons/pdf.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/upload",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "file",
+          "accept": ["audio/*", "video/*", "application/pdf", "image/*"]
+        }
+      ]
+    }
+  }
+}

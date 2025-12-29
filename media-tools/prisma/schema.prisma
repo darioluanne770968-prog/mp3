@@ -62,6 +62,10 @@ model User {
   shares       Share[]
   apiKeys      ApiKey[]
   batches      BatchJob[]
+  teams        TeamMember[]
+  projects     Project[]
+  templates    Template[]
+  webhooks     Webhook[]
 
   // Usage limits
   dailyUsage   Int      @default(0)
@@ -198,4 +202,156 @@ enum TaskStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// Team Collaboration
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  inviteCode  String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members  TeamMember[]
+  projects Project[]
+  files    TeamFile[]
+
+  @@index([inviteCode])
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model TeamFile {
+  id        String   @id @default(cuid())
+  fileId    String
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([teamId])
+}
+
+// Project Management
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User    @relation(fields: [userId], references: [id])
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  files ProjectFile[]
+  tasks ProjectTask[]
+
+  @@index([userId])
+  @@index([teamId])
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  fileId    String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model ProjectTask {
+  id        String   @id @default(cuid())
+  taskId    String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// Templates
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  toolType    String
+  settings    Json
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  uses   TemplateUse[]
+
+  @@index([toolType])
+  @@index([userId])
+  @@index([isPublic])
+}
+
+model TemplateUse {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  @@index([templateId])
+}
+
+// Webhooks
+model Webhook {
+  id        String   @id @default(cuid())
+  url       String
+  secret    String
+  events    String[]
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs   WebhookLog[]
+
+  @@index([userId])
+}
+
+model WebhookLog {
+  id         String   @id @default(cuid())
+  event      String
+  payload    String   @db.Text
+  statusCode Int
+  response   String?  @db.Text
+  success    Boolean
+  createdAt  DateTime @default(now())
+
+  webhookId String
+  webhook   Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
 }
