@@ -1,8 +1,12 @@
 import { Worker, Job } from "bullmq";
 import IORedis from "ioredis";
 import * as ffmpeg from "../lib/ffmpeg";
+import * as pdf from "../lib/pdf";
+import * as archive from "../lib/archive";
 import { JobData, JobResult } from "../lib/queue";
 import prisma from "../lib/prisma";
+import path from "path";
+import fs from "fs/promises";
 
 const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -197,6 +201,143 @@ async function processJob(job: Job<JobData, JobResult>): Promise<JobResult> {
           { onProgress }
         );
         break;
+
+      case "video-add-text":
+        await ffmpeg.addTextToVideo(
+          inputFile,
+          outputFile,
+          params.text as string,
+          params.position as "top" | "center" | "bottom",
+          params.fontSize as number,
+          params.fontColor as string,
+          params.backgroundColor as string,
+          { onProgress }
+        );
+        break;
+
+      case "video-filters":
+        await ffmpeg.applyVideoFilters(
+          inputFile,
+          outputFile,
+          params.brightness as number,
+          params.contrast as number,
+          params.saturation as number,
+          { onProgress }
+        );
+        break;
+
+      case "audio-vocal-remove":
+        await ffmpeg.removeVocals(inputFile, outputFile, { onProgress });
+        break;
+
+      case "image-convert":
+        await ffmpeg.convertImage(
+          inputFile,
+          outputFile,
+          params.quality as number,
+          params.width as number | undefined,
+          params.height as number | undefined,
+          { onProgress }
+        );
+        break;
+
+      // PDF operations
+      case "pdf-merge":
+        await pdf.mergePDFs(
+          params.files as string[],
+          outputFile,
+          { onProgress }
+        );
+        break;
+
+      case "pdf-split": {
+        const outputDir = path.dirname(outputFile);
+        await pdf.splitPDF(
+          inputFile,
+          outputDir,
+          params.ranges as { start: number; end: number }[] | undefined,
+          { onProgress }
+        );
+        break;
+      }
+
+      case "pdf-rotate":
+        await pdf.rotatePDF(
+          inputFile,
+          outputFile,
+          params.rotation as 90 | 180 | 270,
+          params.pages as number[] | undefined,
+          { onProgress }
+        );
+        break;
+
+      case "pdf-compress":
+        await pdf.compressPDF(inputFile, outputFile, { onProgress });
+        break;
+
+      case "pdf-protect":
+        await pdf.protectPDF(
+          inputFile,
+          outputFile,
+          params.password as string,
+          params.ownerPassword as string | undefined,
+          { onProgress }
+        );
+        break;
+
+      case "pdf-to-jpg": {
+        const imgOutputDir = path.dirname(outputFile);
+        await pdf.pdfToImages(
+          inputFile,
+          imgOutputDir,
+          "jpg",
+          params.dpi as number || 150,
+          { onProgress }
+        );
+        break;
+      }
+
+      case "pdf-to-word": {
+        const wordOutputDir = path.dirname(outputFile);
+        await pdf.pdfToWord(inputFile, wordOutputDir, { onProgress });
+        break;
+      }
+
+      case "pdf-to-excel": {
+        const excelOutputDir = path.dirname(outputFile);
+        await pdf.pdfToExcel(inputFile, excelOutputDir, { onProgress });
+        break;
+      }
+
+      case "word-to-pdf": {
+        const pdfOutputDir = path.dirname(outputFile);
+        await pdf.documentToPDF(inputFile, pdfOutputDir, { onProgress });
+        break;
+      }
+
+      // Archive operations
+      case "compress-archive":
+        if (params.format === "7z") {
+          await archive.create7z(
+            params.files as string[],
+            outputFile,
+            params.level as number || 9,
+            { onProgress }
+          );
+        } else {
+          await archive.createZip(
+            params.files as string[],
+            outputFile,
+            { onProgress }
+          );
+        }
+        break;
+
+      case "archive-extract": {
+        const extractDir = path.dirname(outputFile);
+        await archive.extractArchive(inputFile, extractDir, { onProgress });
+        break;
+      }
 
       default:
         throw new Error(`Unknown job type: ${type}`);

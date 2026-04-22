@@ -8,16 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload, FileList, UploadedFile } from "@/components/tools/file-upload";
+import { ProgressTracker } from "@/components/tools/progress-tracker";
 
 const archiveFormats = [
   { value: "zip", label: "ZIP", description: "Most compatible" },
-  { value: "tar.gz", label: "TAR.GZ", description: "Unix standard" },
   { value: "7z", label: "7Z", description: "High compression" },
-  { value: "rar", label: "RAR", description: "Popular format" },
 ];
 
 export default function ArchiveToolsPage() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [taskId, setTaskId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("compress");
   const [outputFormat, setOutputFormat] = useState("zip");
 
@@ -28,6 +28,53 @@ export default function ArchiveToolsPage() {
   const handleRemove = (id: string) => {
     setFiles(files.filter((f) => f.id !== id));
   };
+
+  const handleCompress = async () => {
+    if (files.length === 0) return;
+
+    const response = await fetch("/api/task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "compress-archive",
+        inputFileId: files[0].id,
+        params: {
+          files: files.map(f => f.id),
+          format: outputFormat,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    setTaskId(data.taskId);
+  };
+
+  const handleExtract = async () => {
+    if (files.length === 0) return;
+
+    const response = await fetch("/api/task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "archive-extract",
+        inputFileId: files[0].id,
+        params: {},
+      }),
+    });
+
+    const data = await response.json();
+    setTaskId(data.taskId);
+  };
+
+  if (taskId) {
+    return (
+      <div className="container py-8">
+        <div className="max-w-4xl mx-auto">
+          <ProgressTracker taskId={taskId} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
@@ -98,13 +145,9 @@ export default function ArchiveToolsPage() {
                     </Select>
                   </div>
 
-                  <div className="p-4 bg-muted rounded-lg text-center text-sm text-muted-foreground">
-                    Archive compression feature coming soon!
-                  </div>
-
-                  <Button className="w-full" size="lg" disabled>
+                  <Button onClick={handleCompress} className="w-full" size="lg">
                     <Package className="h-4 w-4 mr-2" />
-                    Compress (Coming Soon)
+                    Compress to {outputFormat.toUpperCase()}
                   </Button>
                 </>
               )}
@@ -121,13 +164,9 @@ export default function ArchiveToolsPage() {
                 <>
                   <FileList files={files} onRemove={handleRemove} />
 
-                  <div className="p-4 bg-muted rounded-lg text-center text-sm text-muted-foreground">
-                    Archive extraction feature coming soon!
-                  </div>
-
-                  <Button className="w-full" size="lg" disabled>
+                  <Button onClick={handleExtract} className="w-full" size="lg">
                     <FolderArchive className="h-4 w-4 mr-2" />
-                    Extract (Coming Soon)
+                    Extract Archive
                   </Button>
                 </>
               )}

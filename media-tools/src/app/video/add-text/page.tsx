@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileUpload, FileList, UploadedFile } from "@/components/tools/file-upload";
 import { VideoPlayer } from "@/components/tools/video-player";
+import { ProgressTracker } from "@/components/tools/progress-tracker";
 
 export default function VideoAddTextPage() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [taskId, setTaskId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [position, setPosition] = useState("center");
   const [fontSize, setFontSize] = useState("medium");
@@ -24,6 +26,49 @@ export default function VideoAddTextPage() {
   const handleRemove = (id: string) => {
     setFiles(files.filter((f) => f.id !== id));
   };
+
+  const handleProcess = async () => {
+    if (files.length === 0 || !text.trim()) return;
+
+    const fontSizeMap: Record<string, number> = {
+      small: 32,
+      medium: 48,
+      large: 72,
+    };
+
+    const response = await fetch("/api/task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "video-add-text",
+        inputFileId: files[0].id,
+        params: {
+          text: text.trim(),
+          position: position as "top" | "center" | "bottom",
+          fontSize: fontSizeMap[fontSize] || 48,
+          fontColor: color,
+          backgroundColor: "black@0.5",
+        },
+      }),
+    });
+
+    const data = await response.json();
+    setTaskId(data.taskId);
+  };
+
+  if (taskId) {
+    return (
+      <div className="container py-8">
+        <div className="max-w-4xl mx-auto">
+          <ProgressTracker
+            taskId={taskId}
+            onComplete={() => {}}
+            onError={(error) => console.error(error)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
@@ -118,13 +163,14 @@ export default function VideoAddTextPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-muted rounded-lg text-center text-sm text-muted-foreground">
-                  Text overlay feature coming soon!
-                </div>
-
-                <Button className="w-full" size="lg" disabled>
+                <Button
+                  onClick={handleProcess}
+                  className="w-full"
+                  size="lg"
+                  disabled={!text.trim()}
+                >
                   <Type className="h-4 w-4 mr-2" />
-                  Add Text (Coming Soon)
+                  Add Text to Video
                 </Button>
               </CardContent>
             </Card>

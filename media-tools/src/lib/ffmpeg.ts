@@ -460,3 +460,93 @@ export async function extractAudio(
     output
   ], info.duration, options);
 }
+
+// Add text overlay to video
+export async function addTextToVideo(
+  input: string,
+  output: string,
+  text: string,
+  position: "top" | "center" | "bottom" = "bottom",
+  fontSize: number = 48,
+  fontColor: string = "white",
+  backgroundColor: string = "black@0.5",
+  options?: FFmpegOptions
+): Promise<void> {
+  const info = await getMediaInfo(input);
+
+  let yPosition: string;
+  switch (position) {
+    case "top": yPosition = "50"; break;
+    case "center": yPosition = "(h-text_h)/2"; break;
+    case "bottom": yPosition = "h-text_h-50"; break;
+  }
+
+  const escapedText = text.replace(/'/g, "'\\''").replace(/:/g, "\\:");
+
+  await runFFmpeg([
+    "-i", input,
+    "-vf", `drawtext=text='${escapedText}':fontsize=${fontSize}:fontcolor=${fontColor}:box=1:boxcolor=${backgroundColor}:boxborderw=10:x=(w-text_w)/2:y=${yPosition}`,
+    "-c:a", "copy",
+    output
+  ], info.duration, options);
+}
+
+// Apply video filters (brightness, contrast, saturation)
+export async function applyVideoFilters(
+  input: string,
+  output: string,
+  brightness: number = 0,
+  contrast: number = 1,
+  saturation: number = 1,
+  options?: FFmpegOptions
+): Promise<void> {
+  const info = await getMediaInfo(input);
+  await runFFmpeg([
+    "-i", input,
+    "-vf", `eq=brightness=${brightness}:contrast=${contrast}:saturation=${saturation}`,
+    "-c:a", "copy",
+    output
+  ], info.duration, options);
+}
+
+// Remove vocals using FFmpeg's audio manipulation (basic version)
+export async function removeVocals(
+  input: string,
+  output: string,
+  options?: FFmpegOptions
+): Promise<void> {
+  const info = await getMediaInfo(input);
+  // This uses center channel removal technique - not perfect but works for some songs
+  await runFFmpeg([
+    "-i", input,
+    "-af", "pan=stereo|c0=c0-c1|c1=c1-c0",
+    output
+  ], info.duration, options);
+}
+
+// Image conversion using FFmpeg
+export async function convertImage(
+  input: string,
+  output: string,
+  quality: number = 90,
+  width?: number,
+  height?: number,
+  options?: FFmpegOptions
+): Promise<void> {
+  const args = ["-i", input];
+
+  if (width || height) {
+    const scale = width && height ? `${width}:${height}` : width ? `${width}:-1` : `-1:${height}`;
+    args.push("-vf", `scale=${scale}`);
+  }
+
+  // Quality settings based on output format
+  if (output.endsWith(".jpg") || output.endsWith(".jpeg")) {
+    args.push("-q:v", Math.round((100 - quality) / 3).toString());
+  } else if (output.endsWith(".webp")) {
+    args.push("-quality", quality.toString());
+  }
+
+  args.push(output);
+  await runFFmpeg(args, undefined, options);
+}

@@ -68,13 +68,20 @@ function getOutputExtension(type: string, format?: string): string {
     return `.${format}`;
   }
 
-  const audioTypes = ["audio-trim", "audio-merge", "audio-volume", "audio-speed", "audio-pitch", "audio-equalizer", "audio-reverse"];
-  const videoTypes = ["video-trim", "video-crop", "video-rotate", "video-speed", "video-volume", "video-mute", "video-add-music", "video-loop", "video-reverse"];
+  const audioTypes = ["audio-trim", "audio-merge", "audio-volume", "audio-speed", "audio-pitch", "audio-equalizer", "audio-reverse", "audio-vocal-remove"];
+  const videoTypes = ["video-trim", "video-crop", "video-rotate", "video-speed", "video-volume", "video-mute", "video-add-music", "video-loop", "video-reverse", "video-add-text", "video-filters"];
 
   if (audioTypes.includes(type)) return ".mp3";
   if (videoTypes.includes(type)) return ".mp4";
   if (type === "audio-ringtone") return ".m4r";
+  if (type === "pdf-to-word") return ".docx";
+  if (type === "pdf-to-excel") return ".xlsx";
+  if (type === "pdf-to-jpg") return ".jpg";
+  if (type === "word-to-pdf") return ".pdf";
   if (type.startsWith("pdf-")) return ".pdf";
+  if (type === "image-convert") return format ? `.${format}` : ".jpg";
+  if (type === "compress-archive") return format === "7z" ? ".7z" : ".zip";
+  if (type === "archive-extract") return "";
 
   return ".out";
 }

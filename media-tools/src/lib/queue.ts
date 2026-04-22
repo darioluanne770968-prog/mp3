@@ -26,6 +26,8 @@ export type JobType =
   | "video-loop"
   | "video-reverse"
   | "video-convert"
+  | "video-add-text"
+  | "video-filters"
   | "pdf-to-word"
   | "pdf-to-excel"
   | "pdf-to-jpg"
@@ -38,7 +40,8 @@ export type JobType =
   | "pdf-rotate"
   | "image-convert"
   | "document-convert"
-  | "compress-archive";
+  | "compress-archive"
+  | "archive-extract";
 
 export interface JobData {
   taskId: string;
